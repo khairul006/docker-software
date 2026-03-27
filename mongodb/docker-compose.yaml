@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongodb/mongodb-community-server:8.2-ubi8
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-data:/data/db        # Persistent data
+      - ./mongo-config:/data/configdb  # Configuration files
+    healthcheck:
+      # Use the mongosh 'hello' command to check status.
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('hello')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shared-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+networks:
+  shared-network:
+    external: true
