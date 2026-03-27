@@ -37,3 +37,6 @@ postgres/data/
 mongodb/mongo-data/
 mongodb/mongo-config/
 mysql/data/
+rabbitmq/data/lib/
+rabbitmq/data/log/
+rabbitmq/data/ssl/

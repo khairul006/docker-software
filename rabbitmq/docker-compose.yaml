@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbitmq_management -rabbitmq_mqtt -rabbitmq_federation -rabbitmq_federation_management"
+    ports:
+      - "5672:5672"   # AMQP for apps
+      - "15672:15672" # Management UI
+      - "5671:5671"
+      - "1883:1883"
+    volumes:
+      - ./data/lib:/var/lib/rabbitmq
+      - ./data/log:/var/log/rabbitmq
+      - ./data/ssl:/etc/rabbitmq/ssl
+      - ./data/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./data/rabbitmq-entrypoint.sh:/usr/local/bin/rabbitmq-entrypoint.sh
+    networks:
+      - shared-network
+    entrypoint: ["/bin/sh", "-c", "chmod +x /usr/local/bin/rabbitmq-entrypoint.sh && /usr/local/bin/rabbitmq-entrypoint.sh"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"      # Maximum size of each log file
+        max-file: "10"        # Maximum number of log files to keep
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  shared-network:
+    external: true
