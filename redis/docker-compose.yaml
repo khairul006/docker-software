@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: dev-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data:/data   # bind local folder ./data to container /data
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
+    networks:
+      - shared-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"      # Maximum size of each log file
+        max-file: "10"        # Maximum number of log files to keep
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+networks:
+  shared-network:
+    external: true

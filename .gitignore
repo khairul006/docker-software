@@ -34,9 +34,10 @@ kafka/postgres-data/
 kafka/kafka-data/
 kafka/zookeeper-data/
 postgres/data/
-mongodb/mongo-data/
-mongodb/mongo-config/
+mongodb/data/
+mongodb/config/
 mysql/data/
 rabbitmq/data/lib/
 rabbitmq/data/log/
 rabbitmq/data/ssl/
+redis/data/

@@ -11,8 +11,8 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./mongo-data:/data/db        # Persistent data
-      - ./mongo-config:/data/configdb  # Configuration files
+      - ./data:/data/db        # Persistent data
+      - ./config:/data/configdb  # Configuration files
     healthcheck:
       # Use the mongosh 'hello' command to check status.
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('hello')"]
