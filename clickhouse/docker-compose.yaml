@@ -21,8 +21,9 @@ services:
       - "9000:9000"
       - "9009:9009"
     volumes:
-      - ./data:/var/lib/clickhouse
-      - ./logs:/var/log/clickhouse-server
+      # Use Named Volumes for data and logs (Linux Native)
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
       # Only mount the tuning file, let ClickHouse handle the rest
       - ./config/tuning.xml:/etc/clickhouse-server/config.d/tuning.xml
     healthcheck:
@@ -31,3 +32,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+  
+# Declare the named volumes at the bottom
+volumes:
+  clickhouse_data:
+  clickhouse_logs:
