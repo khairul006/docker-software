@@ -1,0 +1,33 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    # Added capabilities mentioned in documentation for advanced features
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+      - IPC_LOCK
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      # These variables ensure the 'default' user is initialized with network access
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=password
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+      - "9009:9009"
+    volumes:
+      - ./data:/var/lib/clickhouse
+      - ./logs:/var/log/clickhouse-server
+      # Only mount the tuning file, let ClickHouse handle the rest
+      - ./config/tuning.xml:/etc/clickhouse-server/config.d/tuning.xml
+    healthcheck:
+      # Use the native client as suggested by the "Connect to it" section
+      test: ["CMD", "clickhouse-client", "--user", "default", "--password", "password", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

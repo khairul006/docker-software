@@ -30,6 +30,8 @@ npm-debug.log*
 .env.local
 
 # Docker persistent data
+clickhouse/data/
+clickhouse/logs/
 kafka/postgres-data/
 kafka/kafka-data/
 kafka/zookeeper-data/
