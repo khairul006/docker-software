@@ -15,6 +15,7 @@ services:
     volumes:
       - ./data:/var/lib/postgresql/data   # Persistent data
       - ./init-scripts:/docker-entrypoint-initdb.d    # Create user_management schema
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_replication_slots=10", "-c", "max_wal_senders=10"]
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "terasadmin"]
       interval: 10s
