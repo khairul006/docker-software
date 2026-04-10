@@ -1,0 +1,42 @@
+# Running MSSQL in Docker for production is usually not recommended by Microsoft, but for development and testing purposes, it can be a convenient option. 
+version: "3.9"
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    # restart: always
+    env_file:
+      - .env
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Standard"        # Developer | Express | Standard | Enterprise
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    ports:
+      - "1434:1433"
+    # volumes:
+    #   - ./data:/var/opt/mssql              # Persistent data
+    volumes:
+      - mssql_data:/var/opt/mssql
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $$MSSQL_SA_PASSWORD -Q 'SELECT 1' || exit 1"
+      ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+#    networks:
+#      - ocr-network-api
+
+volumes:
+  mssql_data:
+
+# networks:
+#   ocr-network-api:
+#     external: true

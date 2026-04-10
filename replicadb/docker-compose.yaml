@@ -1,0 +1,19 @@
+services:
+  replicadb-sync:
+    image: osalvador/replicadb:latest
+    container_name: replicadb_sync
+    working_dir: /home/replicadb
+    volumes:
+      # Bind the config folders
+      - ./conf:/home/replicadb/conf
+    # Pointing to the file inside the container volume
+    command: ["--options-file", "/home/replicadb/conf/replicadb.conf"]
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+    # Prevents it from restarting constantly if it finishes successfully
+    restart: "no"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"

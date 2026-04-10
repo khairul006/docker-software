@@ -3,6 +3,7 @@ CREATE TABLE transaction (
     id SERIAL PRIMARY KEY,
     exit_plaza VARCHAR(255) NOT NULL,
     entry_plaza VARCHAR(255) NULL,
+    remarks VARCHAR(255) NULL,
     money_value NUMERIC(8, 2) NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

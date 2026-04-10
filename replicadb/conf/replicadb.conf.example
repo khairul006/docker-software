@@ -1,0 +1,25 @@
+# --- SOURCE: MSSQL ---
+source.connect=jdbc:sqlserver://127.0.0.1:1433;databaseName=appdb;trustServerCertificate=true
+source.user=
+source.password=
+# Use source.table OR source.query, not both
+source.table=transaction
+source.where=updated_at > '2026-01-01'
+source.columns=id,exit_plaza,entry_plaza,CONCAT(exit_plaza, '-', entry_plaza, '-PLUS'),money_value,updated_at
+
+# --- SINK: POSTGRES ---
+sink.connect=jdbc:postgresql://127.0.0.1:5432/postgres
+sink.user=
+sink.password=
+sink.table=transaction
+sink.columns=id,exit_plaza,entry_plaza,remarks,money_value,updated_at
+
+# --- INCREMENTAL ---
+mode=incremental
+
+# --- PERFORMANCE ---
+fetch.size=10000
+jobs=4
+
+# --- LOGGING ---
+verbose=true
