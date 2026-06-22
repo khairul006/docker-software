@@ -45,3 +45,4 @@ rabbitmq/data/log/
 rabbitmq/data/ssl/
 redis/data/
 replicadb/conf/replicadb.conf
+elk/elastic-data/
