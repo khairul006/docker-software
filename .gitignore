@@ -36,6 +36,7 @@ kafka/postgres-data/
 kafka/kafka-data/
 kafka/zookeeper-data/
 postgres/data/
+prefect/postgres-data/
 mongodb/data/
 mongodb/config/
 mssql/data/
