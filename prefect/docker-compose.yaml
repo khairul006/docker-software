@@ -84,6 +84,8 @@ services:
       - ./flows:/opt/prefect/flows
       - ./.env:/opt/prefect/.env
     working_dir: /opt/prefect/flows
+    env_file:
+        - .env
     depends_on:
       prefect-server:
         condition: service_healthy
