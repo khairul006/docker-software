@@ -32,6 +32,7 @@ npm-debug.log*
 # Docker persistent data
 clickhouse/data/
 clickhouse/logs/
+jenkins/jenkins_home/
 kafka/postgres-data/
 kafka/kafka-data/
 kafka/zookeeper-data/
