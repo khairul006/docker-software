@@ -1,111 +1,124 @@
 # Jenkins for First-Timers: Setting Up & Testing Server Connectivity
-
+ 
 A beginner's guide to getting a Dockerized Jenkins instance running PowerShell pipelines, using a simple "ping the plazas" connectivity test as the first working example.
-
+ 
 ---
-
+ 
 ## 1. Prerequisites
-
-- Docker installed and a Jenkins container already running (e.g. `docker run -p 8080:8080 jenkins/jenkins:lts`)
+ 
+- Docker and Docker Compose installed
 - Access to the Jenkins Web UI (default: `http://localhost:8080`)
-- Terminal access to the host machine (to run `docker exec` commands)
-
+- Terminal access to the host machine
+- A local git repository containing your `docker-compose.yaml` and pipeline files (this guide assumes a structure like `docker-doftware/jenkins/`)
 > **Note:** The official `jenkins/jenkins` Docker image is built on **Debian**, not Ubuntu. This is normal — don't switch base images just because tutorials assume Ubuntu. Debian and Ubuntu behave almost identically for everything in this guide.
-
+ 
 ---
-
+ 
 ## 2. Initial Jenkins Setup
-
+ 
 1. Find your Jenkins container name/ID:
-   ```bash
+```bash
    docker ps
-   ```
+```
 2. Get the initial admin password (only needed on first run):
-   ```bash
-   docker logs <jenkins_container_name>
-   ```
+```bash
+   docker logs jenkins
+```
    or
-   ```bash
-   docker exec <jenkins_container_name> cat /var/jenkins_home/secrets/initialAdminPassword
-   ```
+```bash
+   docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
 3. Open `http://localhost:8080` in your browser, paste the password.
 4. Choose **"Install suggested plugins"**.
 5. Create your first admin user when prompted.
-
 ---
-
-## 3. Installing PowerShell Core (`pwsh`) Inside the Container
-
+ 
+## 3. Building PowerShell Core (`pwsh`) Into the Image
+ 
 Jenkins pipelines can run PowerShell scripts, but the Jenkins Docker image doesn't include PowerShell by default. Since the container is Linux-based, we install **PowerShell Core (`pwsh`)**, not Windows PowerShell.
-
-### 3.1 Enter the container as root
-
+ 
+**Important lesson learned:** installing things by hand with `docker exec` (entering the container and running `apt-get`/tarball commands directly) does **not** persist. Only what's bound to a volume (like `jenkins_home`) survives `docker compose down && up` — the container's own filesystem, including anything manually installed, is thrown away and rebuilt fresh from the base image every time. The fix is to **bake the installation into a custom Dockerfile**, so the same environment exists every time the container is (re)built, permanently.
+ 
+### 3.1 Create a `Dockerfile`
+ 
+Place this next to your `docker-compose.yaml` (e.g. in `jenkins/Dockerfile`):
+ 
+```dockerfile
+FROM jenkins/jenkins:lts-jdk21
+ 
+USER root
+ 
+# Base tools needed to download and extract PowerShell,
+# plus ICU (required by PowerShell Core) and ping (used by Test-Connection)
+RUN apt-get update && apt-get install -y \
+        curl \
+        tar \
+        libicu-dev \
+        iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+ 
+# Install PowerShell Core via tarball — avoids Microsoft's .deb repo,
+# which targets Ubuntu and can mismatch Debian-based Jenkins images
+RUN mkdir -p /opt/microsoft/powershell/7 \
+    && curl -L -o /tmp/powershell.tar.gz \
+        https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell-7.4.6-linux-x64.tar.gz \
+    && tar -xzf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 \
+    && chmod +x /opt/microsoft/powershell/7/pwsh \
+    && ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh \
+    && rm /tmp/powershell.tar.gz
+ 
+USER jenkins
+```
+ 
+### 3.2 Point `docker-compose.yaml` at the Dockerfile
+ 
+```yaml
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+      - ..:/repos/docker-doftware:ro
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+      - JAVA_OPTS=-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true
+```
+ 
+### 3.3 Build and start
+ 
 ```bash
-docker exec -u root -it <jenkins_container_name> bash
+docker compose down
+docker compose build
+docker compose up -d
 ```
-
-### 3.2 Install required base tools
-
+ 
+### 3.4 Verify
+ 
 ```bash
-apt-get update && apt-get install -y curl tar
+docker exec -it jenkins pwsh -Command "echo hello"
+docker exec -it jenkins which ping
 ```
-
-### 3.3 Download and install PowerShell Core from the official tarball
-
-Using the tarball avoids distro-specific package repo issues (e.g. Microsoft's `.deb` repos are built for Ubuntu and may not match Debian).
-
-```bash
-mkdir -p /opt/microsoft/powershell/7
-curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell-7.4.6-linux-x64.tar.gz
-tar -xzf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
-chmod +x /opt/microsoft/powershell/7/pwsh
-ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
-```
-
-### 3.4 Test it
-
-```bash
-pwsh -Command "echo hello"
-```
-
-**Common error #1 — missing ICU library:**
-
-```
-Couldn't find a valid ICU package installed on the system...
-```
-
-Fix:
-
-```bash
-apt-get install -y libicu-dev
-```
-
-Re-run the test command — it should now print `hello`.
-
-### 3.5 Install the `ping` utility (needed for connectivity tests)
-
-Minimal Debian-based containers often strip out the `ping` binary. PowerShell's `Test-Connection` cmdlet relies on it under the hood.
-
-```bash
-apt-get install -y iputils-ping
-```
-
-### 3.6 Exit the container
-
-```bash
-exit
-```
-
+ 
+Both should succeed — and continue to succeed after any future `down`/`up`, since PowerShell and `ping` are now part of the image itself, not the disposable container layer.
+ 
 ---
-
+ 
 ## 4. Install the PowerShell Plugin in Jenkins
-
+ 
 1. Go to **Manage Jenkins → Plugins → Available plugins**
 2. Search for **"PowerShell"**
 3. Install it (restart Jenkins if prompted)
-
-This plugin provides the `pwsh` step used in Pipeline scripts (for PowerShell Core). Note: there is a separate `powershell` step meant for Windows PowerShell — since our container only has PowerShell **Core**, we use `pwsh`, not `powershell`.
-
+This plugin provides the `pwsh` step used in Pipeline scripts. Note: there is a separate `powershell` step meant for Windows PowerShell — since our container only has PowerShell **Core**, we use `pwsh`, not `powershell`.
+ 
+Unlike the `pwsh` binary itself, this plugin *is* persisted correctly across `down`/`up` — plugins installed through the Jenkins UI are stored in `jenkins_home`, which is bind-mounted to the host and therefore untouched by container recreation.
+ 
 ---
 
 ## 5. Create Your First Pipeline Job
@@ -117,6 +130,8 @@ This plugin provides the `pwsh` step used in Pipeline scripts (for PowerShell Co
 5. Under **"Definition"**, leave it as **"Pipeline script"** (paste directly into the UI — simplest for a first test; later you can switch to **"Pipeline script from SCM"** to pull the Jenkinsfile from Git)
 6. Paste the test script below into the text area
 7. Click **Save**
+
+> **See the separate note "Pipeline Script from SCM — Notes"** for the full setup (repo layout, SCM job fields, local-repo prerequisites, and every gotcha hit along the way). That note is the canonical reference for using pipeline from SCM
 
 ---
 
