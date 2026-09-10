@@ -12,3 +12,4 @@ services:
       - ..:/repos/docker-doftware:ro   # <-- mounts your whole git repo, read-only
     environment:
       - TZ=Asia/Kuala_Lumpur
+      - JAVA_OPTS=-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true

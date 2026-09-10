@@ -10,7 +10,7 @@ pipeline {
         stage('Ping Plazas') {
             steps {
                 script {
-                    def jsonText = readFile("${WORKSPACE}/../config/servers.json")
+                    def jsonText = readFile("${WORKSPACE}/jenkins/pipelines/config/servers.json")
                     // Note: SCM checkout puts THIS repo's files in WORKSPACE,
                     // so config/servers.json needs to be inside the same repo checkout.
                     // See Step 2 note below — we'll fix the path there.
