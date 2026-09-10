@@ -1,20 +1,12 @@
-@NonCPS
-def parseServers(String jsonText) {
-    def slurper = new groovy.json.JsonSlurperClassic()
-    return slurper.parseText(jsonText)
-}
-
 pipeline {
     agent any
     stages {
         stage('Ping Plazas') {
             steps {
                 script {
-                    def jsonText = readFile("${WORKSPACE}/jenkins/pipelines/config/servers.json")
-                    // Note: SCM checkout puts THIS repo's files in WORKSPACE,
-                    // so config/servers.json needs to be inside the same repo checkout.
-                    // See Step 2 note below — we'll fix the path there.
-                    def servers = parseServers(jsonText)
+                    def config = readJSON file: "${WORKSPACE}/jenkins/pipelines/config/servers.json"
+                    def servers = config // adjust below if your JSON is wrapped in a key, e.g. config.servers
+
                     for (s in servers) {
                         pwsh """
                             \$result = Test-Connection -ComputerName '${s.ip}' -Count 2 -ErrorAction SilentlyContinue
