@@ -9,5 +9,6 @@ services:
       - "50000:50000"
     volumes:
       - ./jenkins_home:/var/jenkins_home
+      - ..:/repos/docker-doftware:ro   # <-- mounts your whole git repo, read-only
     environment:
       - TZ=Asia/Kuala_Lumpur
