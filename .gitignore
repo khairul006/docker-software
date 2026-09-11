@@ -34,6 +34,7 @@ npm-debug.log*
 clickhouse/data/
 clickhouse/logs/
 jenkins/jenkins_home/
+jenkins/ansible/inventory/
 kafka/postgres-data/
 kafka/kafka-data/
 kafka/zookeeper-data/

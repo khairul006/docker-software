@@ -1,0 +1,31 @@
+---
+- name: Test connectivity and check SSH service startup mode
+  hosts: windows_servers
+  gather_facts: no
+
+  tasks:
+    - name: Ping test (confirms SSH + PowerShell execution works)
+      ansible.windows.win_ping:
+      register: ping_result
+
+    - name: Show ping result
+      debug:
+        msg: "{{ inventory_hostname }} => {{ ping_result.ping }}"
+
+    - name: Get SSH (sshd) service info
+      ansible.windows.win_service_info:
+        name: sshd
+      register: ssh_service_info
+
+    - name: Show SSH service status and startup type
+      debug:
+        msg: >
+          {{ inventory_hostname }} ->
+          Status: {{ ssh_service_info.services[0].state }},
+          Start mode: {{ ssh_service_info.services[0].start_mode }}
+      when: ssh_service_info.services | length > 0
+
+    - name: Warn if sshd service not found
+      debug:
+        msg: "WARNING: {{ inventory_hostname }} - sshd service not found!"
+      when: ssh_service_info.services | length == 0
