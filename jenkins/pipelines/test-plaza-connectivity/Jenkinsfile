@@ -1,0 +1,24 @@
+pipeline {
+    agent any
+    stages {
+        stage('Ping Plazas') {
+            steps {
+                script {
+                    def config = readJSON file: "${WORKSPACE}/jenkins/pipelines/config/servers.json"
+                    def servers = config // adjust below if your JSON is wrapped in a key, e.g. config.servers
+
+                    for (s in servers) {
+                        pwsh """
+                            \$result = Test-Connection -ComputerName '${s.ip}' -Count 2 -ErrorAction SilentlyContinue
+                            if (\$result) {
+                                Write-Host "[OK] ${s.name} (${s.ip}) is reachable"
+                            } else {
+                                Write-Host "[FAIL] ${s.name} (${s.ip}) is NOT reachable"
+                            }
+                        """
+                    }
+                }
+            }
+        }
+    }
+}

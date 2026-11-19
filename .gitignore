@@ -27,15 +27,19 @@ npm-debug.log*
 
 # Environment
 .env
+.env.jenkins
 .env.local
 
 # Docker persistent data
 clickhouse/data/
 clickhouse/logs/
+jenkins/jenkins_home/
+jenkins/ansible/inventory/
 kafka/postgres-data/
 kafka/kafka-data/
 kafka/zookeeper-data/
 postgres/data/
+prefect/postgres-data/
 mongodb/data/
 mongodb/config/
 mssql/data/
@@ -45,3 +49,4 @@ rabbitmq/data/log/
 rabbitmq/data/ssl/
 redis/data/
 replicadb/conf/replicadb.conf
+elk/elastic-data/

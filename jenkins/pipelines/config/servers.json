@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Plaza01",
+        "ip": "8.8.8.8"
+    },
+    {
+        "name": "Plaza02",
+        "ip": "google.com"
+    },
+    {
+        "name": "Plaza03",
+        "ip": "10.0.0.99"
+    }
+]

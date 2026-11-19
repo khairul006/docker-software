@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'SERVER_HOST', defaultValue: '10.3.20.11', description: 'Windows server IP/hostname')
+    }
+
+    environment {
+        TARGET_DIR = 'C:/Users/Administrator/Downloads/Jenkins'
+    }
+
+    stages {
+        stage('Create test file') {
+            steps {
+                writeFile file: 'hello.txt', text: "Deployed by Jenkins build #${env.BUILD_NUMBER} at ${new Date()}"
+            }
+        }
+
+        stage('Ensure target dir exists') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'plaza-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" \$SSH_USER@${params.SERVER_HOST} \
+                        "powershell -Command \\"New-Item -ItemType Directory -Force -Path '${env.TARGET_DIR}' | Out-Null\\""
+                    """
+                }
+            }
+        }
+
+        stage('Copy file to server') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'plaza-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                    sh """
+                        scp -o StrictHostKeyChecking=no -i "\$SSH_KEY" hello.txt \$SSH_USER@${params.SERVER_HOST}:"${env.TARGET_DIR}/"
+                    """
+                }
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'plaza-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" \$SSH_USER@${params.SERVER_HOST} \
+                        "powershell -Command \\"Get-ChildItem '${env.TARGET_DIR}'\\""
+                    """
+                }
+            }
+        }
+    }
+}
